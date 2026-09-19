@@ -27,4 +27,5 @@ export type SubQuery = {
   id: string;
   path: string;
   host: string;
+  allowInsecure: boolean;
 };

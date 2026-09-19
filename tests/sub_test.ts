@@ -231,3 +231,96 @@ Deno.test("handleSub: Domain remark uses avgScore", async () => {
   assertEquals(lines[0].includes("#bwh-Domain-105-0"), true);
   assertEquals(lines[1].includes("#bwh-Domain-156-1"), true);
 });
+
+Deno.test("handleSub: allowInsecure=true is passed through to URIs", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const url = baseUrl + "&allowInsecure=true";
+  const req = new Request(url, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(
+    lines[0].includes("&allowInsecure=true"),
+    true,
+    `expected &allowInsecure=true in: ${lines[0]}`,
+  );
+  assertEquals(lines[0].includes("&allowInsecure=false"), false);
+});
+
+Deno.test("handleSub: defaults to allowInsecure=false when not specified", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(
+    lines[0].includes("&allowInsecure=false"),
+    true,
+    `expected &allowInsecure=false in: ${lines[0]}`,
+  );
+});
+
+Deno.test("handleSub: allowInsecure=false is explicit and passed through", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const url = baseUrl + "&allowInsecure=false";
+  const req = new Request(url, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(lines[0].includes("&allowInsecure=false"), true);
+});
+
+Deno.test("handleSub: invalid allowInsecure value defaults to false", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const url = baseUrl + "&allowInsecure=yes";
+  const req = new Request(url, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(lines[0].includes("&allowInsecure=false"), true);
+  assertEquals(lines[0].includes("&allowInsecure=yes"), false);
+});
+
+Deno.test("handleSub: host-fallback URI also gets allowInsecure", async () => {
+  const kv = new MemoryKv();
+  const url = baseUrl + "&allowInsecure=true";
+  const req = new Request(url, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(lines[0].includes("@vr.ttmic.top:"), true);
+  assertEquals(lines[0].includes("&allowInsecure=true"), true);
+});
+
+Deno.test("handleSub: allowInsecure is appended to every URI in mixed list", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([
+    sample,
+    { ...sample, value: "104.16.2.2" },
+  ]);
+  await kv.savePreferredDomains([
+    { ...sample, value: "cf.blogluo.eu.org", type: "domain" },
+  ]);
+  const url = baseUrl + "&allowInsecure=true";
+  const req = new Request(url, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 3);
+  for (const line of lines) {
+    assertEquals(
+      line.includes("&allowInsecure=true"),
+      true,
+      `expected &allowInsecure=true in: ${line}`,
+    );
+  }
+});
