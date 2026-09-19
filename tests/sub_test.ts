@@ -1,6 +1,7 @@
 import { assertEquals } from "jsr:@std/assert@^1.0.0";
 import { handleSub } from "../sub.ts";
 import { MemoryKv } from "../kv_memory.ts";
+import type { KvStore } from "../kv_memory.ts";
 import type { Config } from "../config.ts";
 import type { CfEntry } from "../types.ts";
 
@@ -92,4 +93,18 @@ Deno.test("handleSub: remark uses group-idx pattern", async () => {
   for (const r of remarks) {
     assertEquals(r!.startsWith("bwh-"), true);
   }
+});
+
+Deno.test("handleSub: 503 when KV read fails", async () => {
+  const kv: KvStore = {
+    loadPreferredIps: () => Promise.reject(new Error("kv down")),
+    savePreferredIps: () => Promise.resolve(),
+    loadBlacklistIps: () => Promise.resolve([]),
+    saveBlacklistIps: () => Promise.resolve(),
+    loadMeta: () => Promise.resolve({ lastFetch: 0, lastError: null }),
+    saveMeta: () => Promise.resolve(),
+  };
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  assertEquals(res.status, 503);
 });

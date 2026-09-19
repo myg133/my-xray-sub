@@ -113,3 +113,13 @@ Deno.test("fetchVps789Ips: tolerates missing fields", async () => {
     globalThis.fetch = origFetch;
   }
 });
+
+Deno.test("fetchVps789Ips: throws on malformed JSON body", async () => {
+  const origFetch = globalThis.fetch;
+  globalThis.fetch = () => Promise.resolve(new Response("not json{", { status: 200 }));
+  try {
+    await assertRejects(() => fetchVps789Ips("dummy-token"), Error);
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+});
