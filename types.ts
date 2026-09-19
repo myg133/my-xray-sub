@@ -4,6 +4,8 @@ export type CfEntry = {
   avgScore: number;
   avgLatency: number;
   avgPkgLost: number;
+  carrierCode?: "CT" | "CU" | "CM";
+  carrierLatency?: number;
 };
 
 export type VlessParams = {

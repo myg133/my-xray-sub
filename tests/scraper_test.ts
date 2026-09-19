@@ -54,6 +54,8 @@ Deno.test("fetchVps789Ips: parses CT/CU/CM and merges", async () => {
     assertEquals(ips, ["104.16.88.178", "104.19.45.241"]);
     const dup = entries.find((e) => e.value === "104.19.45.241")!;
     assertEquals(dup.avgScore, 250);
+    assertEquals(dup.carrierCode, "CU");
+    assertEquals(dup.carrierLatency, 100);
   } finally {
     globalThis.fetch = origFetch;
   }
@@ -67,6 +69,33 @@ Deno.test("fetchVps789Ips: averages carrier latencies/loss", async () => {
     const e104 = entries.find((e) => e.value === "104.19.45.241")!;
     assertEquals(e104.avgLatency, 100);
     assertEquals(e104.avgPkgLost, 1);
+    assertEquals(e104.carrierCode, "CU");
+    assertEquals(e104.carrierLatency, 100);
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+});
+
+Deno.test("fetchVps789Ips: tracks carrier code per IP", async () => {
+  const body = JSON.stringify({
+    code: 0,
+    data: {
+      CT: [
+        { ip: "1.1.1.1", avgScore: 200, ydLatencyAvg: 100, ltLatencyAvg: 100, dxLatencyAvg: 100 },
+      ],
+      CU: [
+        { ip: "1.1.1.1", avgScore: 150, ydLatencyAvg: 100, ltLatencyAvg: 80, dxLatencyAvg: 100 },
+      ],
+      CM: [],
+    },
+  });
+  const origFetch = globalThis.fetch;
+  globalThis.fetch = () => Promise.resolve(new Response(body, { status: 200 }));
+  try {
+    const entries = await fetchVps789Ips("dummy");
+    assertEquals(entries.length, 1);
+    assertEquals(entries[0].carrierCode, "CU");
+    assertEquals(entries[0].carrierLatency, 80);
   } finally {
     globalThis.fetch = origFetch;
   }

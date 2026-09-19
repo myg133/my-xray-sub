@@ -23,6 +23,8 @@ const sample: CfEntry = {
   avgScore: 100,
   avgLatency: 80,
   avgPkgLost: 1,
+  carrierCode: "CT",
+  carrierLatency: 86,
 };
 
 const baseUrl =
@@ -65,7 +67,7 @@ Deno.test("handleSub: 200 with base64 when token valid + KV has data", async () 
     lines[0].startsWith("vless://d08096d7-2715-486a-925d-b2e506192385@104.16.1.1:443?"),
     true,
   );
-  assertEquals(lines[0].includes("#bwh-0"), true);
+  assertEquals(lines[0].includes("#bwh-CT-86-0"), true);
 });
 
 Deno.test("handleSub: 200 with single host-fallback URI when KV empty", async () => {
@@ -161,4 +163,49 @@ Deno.test("handleSub: 503 when KV read fails", async () => {
   const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
   const res = await handleSub(req, cfg, kv);
   assertEquals(res.status, 503);
+});
+
+Deno.test("handleSub: IP remark includes carrier code and latency", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([
+    {
+      value: "1.2.3.4",
+      type: "ip",
+      avgScore: 100,
+      avgLatency: 50,
+      avgPkgLost: 1,
+      carrierCode: "CT",
+      carrierLatency: 86,
+    },
+    {
+      value: "5.6.7.8",
+      type: "ip",
+      avgScore: 200,
+      avgLatency: 100,
+      avgPkgLost: 1,
+      carrierCode: "CU",
+      carrierLatency: 188,
+    },
+  ]);
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines[0].includes("#bwh-CT-86-0"), true, `expected #bwh-CT-86-0 in: ${lines[0]}`);
+  assertEquals(lines[1].includes("#bwh-CU-188-1"), true, `expected #bwh-CU-188-1 in: ${lines[1]}`);
+});
+
+Deno.test("handleSub: Domain remark uses avgScore", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([]);
+  await kv.savePreferredDomains([
+    { value: "cf.blogluo.eu.org", type: "domain", avgScore: 105, avgLatency: 86, avgPkgLost: 0.4 },
+    { value: "www.oopt.eu.cc", type: "domain", avgScore: 156, avgLatency: 116, avgPkgLost: 0.8 },
+  ]);
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines[0].includes("#bwh-Domain-105-0"), true);
+  assertEquals(lines[1].includes("#bwh-Domain-156-1"), true);
 });
