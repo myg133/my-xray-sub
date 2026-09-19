@@ -37,7 +37,10 @@ export async function fetchVps789Ips(token: string): Promise<CfEntry[]> {
   const url = `${ENDPOINT}?token=${encodeURIComponent(token)}`;
   const res = await fetch(url, { headers: { "User-Agent": "xray-sub/1.0" } });
   if (!res.ok) {
-    throw new Error(`vps789 fetch failed: HTTP ${res.status}`);
+    const hint = res.status === 401 || res.status === 403
+      ? " (token may be expired or invalid — check VPS789_TOKEN)"
+      : "";
+    throw new Error(`vps789 fetch failed: HTTP ${res.status}${hint}`);
   }
   const json = await res.json();
   if (json.code !== 0) {
