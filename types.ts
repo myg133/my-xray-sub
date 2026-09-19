@@ -20,6 +20,7 @@ export type VlessParams = {
   fingerprint: string;
   encryption: "none";
   mode: "auto";
+  allowInsecure?: boolean;
 };
 
 export type SubQuery = {

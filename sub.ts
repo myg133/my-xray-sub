@@ -26,6 +26,7 @@ function vlessParamsFromQuery(q: SubQuery): VlessParams {
     fingerprint: "chrome",
     encryption: "none",
     mode: "auto",
+    allowInsecure: q.allowInsecure,
   };
 }
 
@@ -53,15 +54,14 @@ export async function handleSub(req: Request, cfg: Config, kv: KvStore): Promise
   const params = vlessParamsFromQuery(q);
 
   const allEntries: CfEntry[] = [...ips, ...domains];
-  const allowInsecureFlag = q.allowInsecure ? "true" : "false";
   const uris = allEntries.length > 0
     ? allEntries.map((entry, idx) => {
       const remark = entry.type === "ip"
         ? `${q.group}-${entry.carrierCode ?? "?"}-${Math.round(entry.carrierLatency ?? 0)}-${idx}`
         : `${q.group}-Domain-${entry.avgScore}-${idx}`;
-      return `${buildVlessUri(params, entry.value, remark)}&allowInsecure=${allowInsecureFlag}`;
+      return buildVlessUri(params, entry.value, remark);
     })
-    : [`${buildVlessUri(params, q.host, `${q.group}-0`)}&allowInsecure=${allowInsecureFlag}`];
+    : [buildVlessUri(params, q.host, `${q.group}-0`)];
 
   const body = btoa(uris.join("\n"));
   return new Response(body, {

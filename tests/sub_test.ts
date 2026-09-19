@@ -242,11 +242,16 @@ Deno.test("handleSub: allowInsecure=true is passed through to URIs", async () =>
   const lines = body.split("\n").filter(Boolean);
   assertEquals(lines.length, 1);
   assertEquals(
-    lines[0].includes("&allowInsecure=true"),
+    lines[0].includes("&allowInsecure=true#"),
     true,
-    `expected &allowInsecure=true in: ${lines[0]}`,
+    `expected &allowInsecure=true# before remark in: ${lines[0]}`,
   );
-  assertEquals(lines[0].includes("&allowInsecure=false"), false);
+  const remarkPart = lines[0].split("#")[1] ?? "";
+  assertEquals(
+    remarkPart.includes("allowInsecure"),
+    false,
+    `allowInsecure should not be in remark fragment: ${remarkPart}`,
+  );
 });
 
 Deno.test("handleSub: defaults to allowInsecure=false when not specified", async () => {
@@ -258,10 +263,12 @@ Deno.test("handleSub: defaults to allowInsecure=false when not specified", async
   const lines = body.split("\n").filter(Boolean);
   assertEquals(lines.length, 1);
   assertEquals(
-    lines[0].includes("&allowInsecure=false"),
+    lines[0].includes("&allowInsecure=false#"),
     true,
-    `expected &allowInsecure=false in: ${lines[0]}`,
+    `expected &allowInsecure=false# in: ${lines[0]}`,
   );
+  const remarkPart = lines[0].split("#")[1] ?? "";
+  assertEquals(remarkPart.includes("allowInsecure"), false);
 });
 
 Deno.test("handleSub: allowInsecure=false is explicit and passed through", async () => {
@@ -273,7 +280,7 @@ Deno.test("handleSub: allowInsecure=false is explicit and passed through", async
   const body = atob(await res.text());
   const lines = body.split("\n").filter(Boolean);
   assertEquals(lines.length, 1);
-  assertEquals(lines[0].includes("&allowInsecure=false"), true);
+  assertEquals(lines[0].includes("&allowInsecure=false#"), true);
 });
 
 Deno.test("handleSub: invalid allowInsecure value defaults to false", async () => {
@@ -285,8 +292,7 @@ Deno.test("handleSub: invalid allowInsecure value defaults to false", async () =
   const body = atob(await res.text());
   const lines = body.split("\n").filter(Boolean);
   assertEquals(lines.length, 1);
-  assertEquals(lines[0].includes("&allowInsecure=false"), true);
-  assertEquals(lines[0].includes("&allowInsecure=yes"), false);
+  assertEquals(lines[0].includes("&allowInsecure=false#"), true);
 });
 
 Deno.test("handleSub: host-fallback URI also gets allowInsecure", async () => {
@@ -298,7 +304,9 @@ Deno.test("handleSub: host-fallback URI also gets allowInsecure", async () => {
   const lines = body.split("\n").filter(Boolean);
   assertEquals(lines.length, 1);
   assertEquals(lines[0].includes("@vr.ttmic.top:"), true);
-  assertEquals(lines[0].includes("&allowInsecure=true"), true);
+  assertEquals(lines[0].includes("&allowInsecure=true#"), true);
+  const remarkPart = lines[0].split("#")[1] ?? "";
+  assertEquals(remarkPart.includes("allowInsecure"), false);
 });
 
 Deno.test("handleSub: allowInsecure is appended to every URI in mixed list", async () => {
@@ -318,9 +326,11 @@ Deno.test("handleSub: allowInsecure is appended to every URI in mixed list", asy
   assertEquals(lines.length, 3);
   for (const line of lines) {
     assertEquals(
-      line.includes("&allowInsecure=true"),
+      line.includes("&allowInsecure=true#"),
       true,
-      `expected &allowInsecure=true in: ${line}`,
+      `expected &allowInsecure=true# before remark in: ${line}`,
     );
+    const remarkPart = line.split("#")[1] ?? "";
+    assertEquals(remarkPart.includes("allowInsecure"), false);
   }
 });
