@@ -13,6 +13,7 @@ const baseCfg: Config = {
   scoreThreshold: 500,
   pkgLostThreshold: 10,
   kvRefreshCron: "",
+  requireToken: true,
 };
 
 function makeStubFetch(ipsBody: string | null, domainsBody: string | null) {

@@ -19,6 +19,9 @@ deno task dev
 4. Entry point: `main.ts`. Deno Deploy detects it automatically.
 5. Set custom domain if desired.
 
+For clients that don't support custom headers (e.g. v2rayA), set `REQUIRE_TOKEN=false` in Deno
+Deploy. Be aware this makes the subscription URL the only barrier to access.
+
 ## Client config (v2rayN)
 
 ```

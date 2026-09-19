@@ -16,6 +16,20 @@ Deno.test("loadConfig: returns defaults when only required env vars set", () => 
   assertEquals(cfg.pkgLostThreshold, 10);
   assertEquals(cfg.kvRefreshCron, "0 * * * *");
   assertEquals(cfg.port, 8000);
+  assertEquals(cfg.requireToken, true);
+});
+
+Deno.test("loadConfig: REQUIRE_TOKEN=false disables auth", () => {
+  const cfg = loadConfig({ ...baseEnv, REQUIRE_TOKEN: "false" });
+  assertEquals(cfg.requireToken, false);
+});
+
+Deno.test("loadConfig: REQUIRE_TOKEN parsing is case-insensitive", () => {
+  assertEquals(loadConfig({ ...baseEnv, REQUIRE_TOKEN: "True" }).requireToken, true);
+  assertEquals(loadConfig({ ...baseEnv, REQUIRE_TOKEN: "TRUE" }).requireToken, true);
+  assertEquals(loadConfig({ ...baseEnv, REQUIRE_TOKEN: "False" }).requireToken, false);
+  assertEquals(loadConfig({ ...baseEnv, REQUIRE_TOKEN: "FALSE" }).requireToken, false);
+  assertEquals(loadConfig({ ...baseEnv, REQUIRE_TOKEN: "garbage" }).requireToken, true);
 });
 
 Deno.test("loadConfig: reads VPS789_YF_TOKEN and MAX_NODES_DOMAIN overrides", () => {

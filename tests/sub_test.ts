@@ -15,6 +15,7 @@ const cfg: Config = {
   scoreThreshold: 500,
   pkgLostThreshold: 10,
   kvRefreshCron: "",
+  requireToken: true,
 };
 
 const sample: CfEntry = {
@@ -34,6 +35,27 @@ Deno.test("handleSub: 404 when token missing", async () => {
   const kv = new MemoryKv();
   const res = await handleSub(new Request(baseUrl), cfg, kv);
   assertEquals(res.status, 404);
+});
+
+Deno.test("handleSub: 200 with no token when requireToken=false", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const cfgNoAuth: Config = { ...cfg, requireToken: false };
+  const res = await handleSub(new Request(baseUrl), cfgNoAuth, kv);
+  assertEquals(res.status, 200);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(lines[0].startsWith("vless://"), true);
+});
+
+Deno.test("handleSub: any header value passes when requireToken=false", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const cfgNoAuth: Config = { ...cfg, requireToken: false };
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "anything" } });
+  const res = await handleSub(req, cfgNoAuth, kv);
+  assertEquals(res.status, 200);
 });
 
 Deno.test("handleSub: 404 when token wrong", async () => {

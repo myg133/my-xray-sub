@@ -8,6 +8,7 @@ export type Config = {
   scoreThreshold: number;
   pkgLostThreshold: number;
   kvRefreshCron: string;
+  requireToken: boolean;
 };
 
 function requireFinite(name: string, value: number): number {
@@ -39,6 +40,7 @@ export function loadConfig(env: Record<string, string> = Deno.env.toObject()): C
     Number(env.PKGLOST_THRESHOLD ?? "10"),
   );
   const kvRefreshCron = env.KV_REFRESH_CRON ?? "0 * * * *";
+  const requireToken = (env.REQUIRE_TOKEN ?? "true").toLowerCase() !== "false";
   return {
     port,
     subToken,
@@ -49,5 +51,6 @@ export function loadConfig(env: Record<string, string> = Deno.env.toObject()): C
     scoreThreshold,
     pkgLostThreshold,
     kvRefreshCron,
+    requireToken,
   };
 }

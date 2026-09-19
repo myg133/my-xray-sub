@@ -29,7 +29,7 @@ function vlessParamsFromQuery(q: SubQuery): VlessParams {
 }
 
 export async function handleSub(req: Request, cfg: Config, kv: KvStore): Promise<Response> {
-  if (req.headers.get("X-Sub-Token") !== cfg.subToken) {
+  if (cfg.requireToken && req.headers.get("X-Sub-Token") !== cfg.subToken) {
     return new Response(null, { status: 404 });
   }
   const url = new URL(req.url);
