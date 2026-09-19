@@ -25,7 +25,7 @@ export class DenoKv implements KvStore {
   }
   loadMeta(): Promise<KvMeta> {
     return this.#kv
-      .get<{ lastFetch: number; lastError: string | null }>(["meta"])
+      .get<KvMeta>(["meta"])
       .then((r) => r.value ?? { lastFetch: 0, lastError: null });
   }
   async saveMeta(meta: KvMeta): Promise<void> {

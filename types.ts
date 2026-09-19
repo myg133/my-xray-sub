@@ -26,10 +26,3 @@ export type SubQuery = {
   path: string;
   host: string;
 };
-
-export type KvShape = {
-  preferredIps: CfEntry[];
-  blacklistIps: string[];
-  lastFetch: number;
-  lastError: string | null;
-};
