@@ -70,6 +70,7 @@ Create `xray-sub/deno.json`:
     "test": "deno test --allow-env --allow-net=localhost,127.0.0.1,vps789.com",
     "dev": "deno run --allow-env --allow-net --allow-read --watch main.ts"
   },
+  "unstable": ["kv", "cron"],
   "lint": {
     "rules": {
       "tags": ["recommended"]
