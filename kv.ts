@@ -17,6 +17,12 @@ export class DenoKv implements KvStore {
   async savePreferredIps(entries: CfEntry[]): Promise<void> {
     await this.#kv.set(["preferred", "ips"], entries);
   }
+  loadPreferredDomains(): Promise<CfEntry[]> {
+    return this.#kv.get<CfEntry[]>(["preferred", "domains"]).then((r) => r.value ?? []);
+  }
+  async savePreferredDomains(entries: CfEntry[]): Promise<void> {
+    await this.#kv.set(["preferred", "domains"], entries);
+  }
   loadBlacklistIps(): Promise<string[]> {
     return this.#kv.get<string[]>(["blacklist", "ips"]).then((r) => r.value ?? []);
   }

@@ -8,6 +8,8 @@ export type KvMeta = {
 export interface KvStore {
   loadPreferredIps(): Promise<CfEntry[]>;
   savePreferredIps(entries: CfEntry[]): Promise<void>;
+  loadPreferredDomains(): Promise<CfEntry[]>;
+  savePreferredDomains(entries: CfEntry[]): Promise<void>;
   loadBlacklistIps(): Promise<string[]>;
   saveBlacklistIps(ips: string[]): Promise<void>;
   loadMeta(): Promise<KvMeta>;
@@ -15,15 +17,23 @@ export interface KvStore {
 }
 
 export class MemoryKv implements KvStore {
-  #preferred: CfEntry[] = [];
+  #preferredIps: CfEntry[] = [];
+  #preferredDomains: CfEntry[] = [];
   #blacklist: string[] = [];
   #meta: KvMeta = { lastFetch: 0, lastError: null };
 
   loadPreferredIps(): Promise<CfEntry[]> {
-    return Promise.resolve([...this.#preferred]);
+    return Promise.resolve([...this.#preferredIps]);
   }
   savePreferredIps(entries: CfEntry[]): Promise<void> {
-    this.#preferred = entries;
+    this.#preferredIps = entries;
+    return Promise.resolve();
+  }
+  loadPreferredDomains(): Promise<CfEntry[]> {
+    return Promise.resolve([...this.#preferredDomains]);
+  }
+  savePreferredDomains(entries: CfEntry[]): Promise<void> {
+    this.#preferredDomains = entries;
     return Promise.resolve();
   }
   loadBlacklistIps(): Promise<string[]> {

@@ -1,6 +1,6 @@
 export type CfEntry = {
   value: string;
-  type: "ip";
+  type: "ip" | "domain";
   avgScore: number;
   avgLatency: number;
   avgPkgLost: number;

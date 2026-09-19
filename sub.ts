@@ -40,15 +40,19 @@ export async function handleSub(req: Request, cfg: Config, kv: KvStore): Promise
     });
   }
 
-  let ips: CfEntry[];
+  let ips: CfEntry[], domains: CfEntry[];
   try {
-    ips = await kv.loadPreferredIps();
+    [ips, domains] = await Promise.all([
+      kv.loadPreferredIps(),
+      kv.loadPreferredDomains(),
+    ]);
   } catch (_err) {
     return new Response("KV unavailable", { status: 503 });
   }
   const params = vlessParamsFromQuery(q);
 
-  const addresses: string[] = ips.length > 0 ? ips.map((e) => e.value) : [q.host];
+  const allEntries: CfEntry[] = [...ips, ...domains];
+  const addresses: string[] = allEntries.length > 0 ? allEntries.map((e) => e.value) : [q.host];
 
   const uris = addresses.map((addr, idx) => buildVlessUri(params, addr, `${q.group}-${idx}`));
 

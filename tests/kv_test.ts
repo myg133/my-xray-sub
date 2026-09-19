@@ -10,6 +10,14 @@ const sampleEntry: CfEntry = {
   avgPkgLost: 1,
 };
 
+const sampleDomain: CfEntry = {
+  value: "cf.blogluo.eu.org",
+  type: "domain",
+  avgScore: 105,
+  avgLatency: 86,
+  avgPkgLost: 0.39,
+};
+
 Deno.test("MemoryKv: preferredIps round-trip", async () => {
   const kv = new MemoryKv();
   await kv.savePreferredIps([sampleEntry]);
@@ -34,8 +42,37 @@ Deno.test("MemoryKv: meta round-trip", async () => {
 Deno.test("MemoryKv: empty store returns sensible defaults", async () => {
   const kv = new MemoryKv();
   assertEquals(await kv.loadPreferredIps(), []);
+  assertEquals(await kv.loadPreferredDomains(), []);
   assertEquals(await kv.loadBlacklistIps(), []);
   const meta = await kv.loadMeta();
   assertEquals(meta.lastFetch, 0);
   assertEquals(meta.lastError, null);
+});
+
+Deno.test("MemoryKv: preferredDomains round-trip", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredDomains([sampleDomain]);
+  const loaded = await kv.loadPreferredDomains();
+  assertEquals(loaded, [sampleDomain]);
+});
+
+Deno.test("MemoryKv: preferredDomains independent of preferredIps", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sampleEntry]);
+  await kv.savePreferredDomains([sampleDomain]);
+  assertEquals(await kv.loadPreferredIps(), [sampleEntry]);
+  assertEquals(await kv.loadPreferredDomains(), [sampleDomain]);
+});
+
+Deno.test("MemoryKv: preferredDomains overwrites previous list", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredDomains([sampleDomain]);
+  const replacement = [{ ...sampleDomain, value: "new.example.com" }];
+  await kv.savePreferredDomains(replacement);
+  assertEquals(await kv.loadPreferredDomains(), replacement);
+});
+
+Deno.test("MemoryKv: preferredDomains returns empty when unset", async () => {
+  const kv = new MemoryKv();
+  assertEquals(await kv.loadPreferredDomains(), []);
 });

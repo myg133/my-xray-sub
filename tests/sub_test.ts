@@ -9,7 +9,9 @@ const cfg: Config = {
   port: 0,
   subToken: "secret-token",
   vps789Token: "",
+  vps789YfToken: "",
   maxNodesIp: 20,
+  maxNodesDomain: 20,
   scoreThreshold: 500,
   pkgLostThreshold: 10,
   kvRefreshCron: "",
@@ -95,10 +97,62 @@ Deno.test("handleSub: remark uses group-idx pattern", async () => {
   }
 });
 
+Deno.test("handleSub: mixes IPs and domains in single subscription", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([
+    sample,
+    { ...sample, value: "104.16.2.2" },
+  ]);
+  await kv.savePreferredDomains([
+    { ...sample, value: "cf.blogluo.eu.org", type: "domain" },
+    { ...sample, value: "www.oopt.eu.cc", type: "domain" },
+  ]);
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  assertEquals(res.status, 200);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 4);
+  assertEquals(lines.some((l) => l.includes("@104.16.1.1:")), true);
+  assertEquals(lines.some((l) => l.includes("@104.16.2.2:")), true);
+  assertEquals(lines.some((l) => l.includes("@cf.blogluo.eu.org:")), true);
+  assertEquals(lines.some((l) => l.includes("@www.oopt.eu.cc:")), true);
+  const remarks = lines.map((l) => decodeURIComponent(l.split("#")[1] ?? ""));
+  for (const r of remarks) {
+    assertEquals(r.startsWith("bwh-"), true);
+  }
+});
+
+Deno.test("handleSub: serves IPs when only domains KV is empty", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredIps([sample]);
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(lines[0].includes("@104.16.1.1:"), true);
+});
+
+Deno.test("handleSub: serves domains when only IPs KV is empty", async () => {
+  const kv = new MemoryKv();
+  await kv.savePreferredDomains([
+    { ...sample, value: "cf.blogluo.eu.org", type: "domain" },
+  ]);
+  const req = new Request(baseUrl, { headers: { "X-Sub-Token": "secret-token" } });
+  const res = await handleSub(req, cfg, kv);
+  const body = atob(await res.text());
+  const lines = body.split("\n").filter(Boolean);
+  assertEquals(lines.length, 1);
+  assertEquals(lines[0].includes("@cf.blogluo.eu.org:"), true);
+});
+
 Deno.test("handleSub: 503 when KV read fails", async () => {
   const kv: KvStore = {
     loadPreferredIps: () => Promise.reject(new Error("kv down")),
     savePreferredIps: () => Promise.resolve(),
+    loadPreferredDomains: () => Promise.resolve([]),
+    savePreferredDomains: () => Promise.resolve(),
     loadBlacklistIps: () => Promise.resolve([]),
     saveBlacklistIps: () => Promise.resolve(),
     loadMeta: () => Promise.resolve({ lastFetch: 0, lastError: null }),

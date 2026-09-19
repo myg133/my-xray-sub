@@ -1,13 +1,13 @@
 # xray-sub
 
 Self-hosted v2rayN subscription service. Returns Base64-encoded VLESS+xhttp URIs pointing to your
-Cloudflare CDN-fronted VPS through hourly-refreshed CF preferred IPs.
+Cloudflare CDN-fronted VPS through hourly-refreshed CF preferred IPs and CF preferred domains.
 
 ## Run locally
 
 ```sh
 cp .env.example .env
-# fill in SUB_TOKEN and VPS789_TOKEN
+# fill in SUB_TOKEN, VPS789_TOKEN, and VPS789_YF_TOKEN
 deno task dev
 ```
 
