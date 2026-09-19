@@ -1,7 +1,7 @@
 # xray-sub
 
-Self-hosted v2rayN subscription service. Returns Base64-encoded VLESS+xhttp URIs
-pointing to your Cloudflare CDN-fronted VPS through hourly-refreshed CF preferred IPs.
+Self-hosted v2rayN subscription service. Returns Base64-encoded VLESS+xhttp URIs pointing to your
+Cloudflare CDN-fronted VPS through hourly-refreshed CF preferred IPs.
 
 ## Run locally
 
@@ -27,6 +27,7 @@ Headers: X-Sub-Token: <SUB_TOKEN>
 ```
 
 Where `<params>` is:
+
 ```
 group=<group-name>&id=<vless-uuid>&path=%2F<path>&host=<sni>
 ```
