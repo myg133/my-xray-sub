@@ -1,7 +1,7 @@
 import type { Config } from "./config.ts";
 import type { KvStore } from "./kv_memory.ts";
 import { buildVlessUri } from "./vless.ts";
-import type { SubQuery, VlessParams } from "./types.ts";
+import type { CfEntry, SubQuery, VlessParams } from "./types.ts";
 
 export function parseQuery(url: URL): SubQuery | null {
   const group = url.searchParams.get("group");
@@ -40,7 +40,12 @@ export async function handleSub(req: Request, cfg: Config, kv: KvStore): Promise
     });
   }
 
-  const ips = await kv.loadPreferredIps();
+  let ips: CfEntry[];
+  try {
+    ips = await kv.loadPreferredIps();
+  } catch (_err) {
+    return new Response("KV unavailable", { status: 503 });
+  }
   const params = vlessParamsFromQuery(q);
 
   const addresses: string[] = ips.length > 0 ? ips.map((e) => e.value) : [q.host];
